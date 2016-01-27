@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:cxf="http://www.mulesoft.org/schema/mule/cxf" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/cxf http://www.mulesoft.org/schema/mule/cxf/current/mule-cxf.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+    <http:listener-config name="HTTP_Listener_8081" host="localhost" port="8081" doc:name="HTTP Listener Configuration"/>
+    <db:generic-config name="Generic_Database_Configuration" url="jdbc:h2:mem:test;INIT=RUNSCRIPT FROM 'classpath:create.sql'" driverClassName="org.h2.Driver" doc:name="Generic Database Configuration">
+        <db:pooling-profile maxPoolSize="1" minPoolSize="1"/>
+    </db:generic-config>
+    <cxf:configuration name="CXF_Configuration" enableMuleSoapHeaders="true" initializeStaticBusInstance="true" doc:name="CXF Configuration"/>
+    <flow name="soapFlow">
+        <http:listener config-ref="HTTP_Listener_8081" path="http://www.andre.dionisio.nom.br/SOAPWS" doc:name="HTTP"/>
+        <cxf:jaxws-service  doc:name="CXF" serviceClass="br.nom.dionisio.andre.soapws.SOAPWS" wsdlLocation="SOAPWS.wsdl" bindingId="SOAPWSSOAP" namespace="http://www.andre.dionisio.nom.br/" port="SOAPWS" service="SOAPWS" configuration-ref="CXF_Configuration"/>
+        <custom-transformer returnClass="java.math.BigDecimal" ignoreBadInput="true" encoding="ISO-8859-1" mimeType="application/xml" class="com.avenuecode.challenge.integration.EmployeeBonusTransformer" doc:name="Java"/>
+    </flow>
+    <flow name="restFlow">
+        <http:listener config-ref="HTTP_Listener_8081" path="employees" doc:name="HTTP">
+            <http:response-builder>
+                <http:header headerName="Content-type" value="application/json"/>
+            </http:response-builder>
+        </http:listener>
+    </flow>
+</mule>
